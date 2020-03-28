@@ -5,11 +5,12 @@ import cv2
 # determine what OpenCV version we are using
 try:
     import cv2.cv as cv
+
     USE_CV2 = True
 except ImportError:
     # OpenCV 3.x does not have cv2.cv submodule
     USE_CV2 = False
-    
+
 import sys
 import numpy as np
 
@@ -18,7 +19,6 @@ from temporal_filters import IdealFilterWindowed, ButterBandpassFilter
 
 
 def phaseBasedMagnify(vidFname, vidFnameOut, maxFrames, windowSize, factor, fpsForBandPass, lowFreq, highFreq):
-
     # initialize the steerable complex pyramid
     steer = Steerable(5)
     steer.nbands = 8
@@ -30,14 +30,14 @@ def phaseBasedMagnify(vidFname, vidFnameOut, maxFrames, windowSize, factor, fpsF
     vidReader = cv2.VideoCapture(vidFname)
     if USE_CV2:
         # OpenCV 2.x interface
-        vidFrames = int(vidReader.get(cv.CV_CAP_PROP_FRAME_COUNT))    
+        vidFrames = int(vidReader.get(cv.CV_CAP_PROP_FRAME_COUNT))
         width = int(vidReader.get(cv.CV_CAP_PROP_FRAME_WIDTH))
         height = int(vidReader.get(cv.CV_CAP_PROP_FRAME_HEIGHT))
         fps = int(vidReader.get(cv.CV_CAP_PROP_FPS))
         func_fourcc = cv.CV_FOURCC
     else:
         # OpenCV 3.x interface
-        vidFrames = int(vidReader.get(cv2.CAP_PROP_FRAME_COUNT))    
+        vidFrames = int(vidReader.get(cv2.CAP_PROP_FRAME_COUNT))
         width = int(vidReader.get(cv2.CAP_PROP_FRAME_WIDTH))
         height = int(vidReader.get(cv2.CAP_PROP_FRAME_HEIGHT))
         fps = int(vidReader.get(cv2.CAP_PROP_FPS))
@@ -52,49 +52,47 @@ def phaseBasedMagnify(vidFname, vidFnameOut, maxFrames, windowSize, factor, fpsF
 
     # video Writer
     fourcc = func_fourcc('M', 'J', 'P', 'G')
-    vidWriter = cv2.VideoWriter(vidFnameOut, fourcc, int(fps), (width,height), 1)
+    vidWriter = cv2.VideoWriter(vidFnameOut, fourcc, int(fps), (width, height), 1)
     print 'Writing:', vidFnameOut
 
     # how many frames
     nrFrames = min(vidFrames, maxFrames)
 
     # read video
-    #print steer.height, steer.nbands
+    # print steer.height, steer.nbands
 
     # setup temporal filter
     filter = IdealFilterWindowed(windowSize, lowFreq, highFreq, fps=fpsForBandPass, outfun=lambda x: x[0])
-    #filter = ButterBandpassFilter(1, lowFreq, highFreq, fps=fpsForBandPass)
+    # filter = ButterBandpassFilter(1, lowFreq, highFreq, fps=fpsForBandPass)
 
-    print 'FrameNr:', 
-    for frameNr in range(100):#nrFrames + windowSize
+    print 'FrameNr:',
+    for frameNr in range(nrFrames + windowSize):
         print frameNr,
-        sys.stdout.flush() 
+        sys.stdout.flush()
 
         if frameNr < nrFrames:
             # read frame
             _, im = vidReader.read()
-               
+
             if im is None:
                 # if unexpected, quit
                 break
-			
+
             # convert to gray image
             if len(im.shape) > 2:
-                grayIm = cv2.cvtColor(im, cv2.COLOR_RGB2GRAY)
-                grayIm = cv2.randn(grayIm, (0), (99))
+                im = cv2.cvtColor(im, cv2.COLOR_BGR2HSV)
+                grayIm = im[:, :, 2]
             else:
                 # already a grayscale image?
                 grayIm = im
 
             # We decompose the image within the pyramid's coefficients. This refers to the first column in the figure 2 of the paper.
             coeff = steer.buildSCFpyr(grayIm)
-            #coeff = steer.buildSCFpyr(HSV_img[:,:,2])
-
+            # coeff = steer.buildSCFpyr(HSV_img[:,:,2])
 
             # add image pyramid to video array
-            # NOTE: on first frame, this will init rotating array to store the pyramid coeffs                 
+            # NOTE: on first frame, this will init rotating array to store the pyramid coeffs
             arr = pyArr.p2a(coeff)
-
 
             # We take the phase of the decomposition (second column of figure 2) for every coefficient.
             phases = np.angle(arr)
@@ -102,50 +100,49 @@ def phaseBasedMagnify(vidFname, vidFnameOut, maxFrames, windowSize, factor, fpsF
             # add to temporal filter
             filter.update([phases])
 
-            # try to get filtered output to continue            
+            # try to get filtered output to continue
             try:
                 filteredPhases = filter.next()
             except StopIteration:
                 continue
 
             print '*',
-            
+
             # motion magnification
-            #magnifiedPhases = (phases - filteredPhases) + filteredPhases*factor
-            magnifiedPhases = phases + filteredPhases*factor
+            # magnifiedPhases = (phases - filteredPhases) + filteredPhases*factor
+            magnifiedPhases = phases + filteredPhases * factor
             # create new array
             newArr = np.abs(arr) * np.exp(magnifiedPhases * 1j)
 
-            # create pyramid coeffs     
+            # create pyramid coeffs
             newCoeff = pyArr.a2p(newArr)
-            
+
             # reconstruct pyramid
             out = steer.reconSCFpyr(newCoeff)
 
             # clip values out of range
-            out[out>255] = 255
-            out[out<0] = 0
-            
+            out[out > 255] = 255
+            out[out < 0] = 0
+
             # make a RGB image
-            rgbIm = np.empty( (out.shape[0], out.shape[1], 3 ) )
-            rgbIm[:,:,0] = out#HSV_img[:,:,0]
-            rgbIm[:,:,1] = out#HSV_img[:,:,1]
-            rgbIm[:,:,2] = out#im[:,:,2]
-            
-            #write to disk
+            hsvIm = np.empty((out.shape[0], out.shape[1], 3))
+            hsvIm[:, :, 2] = out
+            rgbIm = cv2.cvtColor(hsvIm.astype(np.float32), cv2.COLOR_HSV2RGB)
+
+            # write to disk
             res = cv2.convertScaleAbs(rgbIm)
             vidWriter.write(res)
 
     # free the video reader/writer
     vidReader.release()
-    vidWriter.release()   
+    vidWriter.release()
 
 
 ################# main script
 
-#vidFname = 'media/baby.mp4';
-#vidFname = 'media/WIN_20151208_17_11_27_Pro.mp4.normalized.avi'
-#vidFname = 'media/embryos01_30s.mp4'
+# vidFname = 'media/baby.mp4';
+# vidFname = 'media/WIN_20151208_17_11_27_Pro.mp4.normalized.avi'
+# vidFname = 'media/embryos01_30s.mp4'
 vidFname = 'media/guitar.mp4'
 
 # maximum nr of frames to process
@@ -155,15 +152,12 @@ windowSize = 30
 # the magnifaction factor
 factor = 2
 # the fps used for the bandpass
-fpsForBandPass = 600 # use -1 for input video fps
+fpsForBandPass = 600  # use -1 for input video fps
 # low ideal filter
 lowFreq = 72
 # high ideal filter
 highFreq = 92
 # output video filename
-vidFnameOut = vidFname + '-Mag%dIdeal-lo%d-hi%d.avi' % (factor, lowFreq, highFreq)
+vidFnameOut = vidFname + '-Mag%dIdeal-lo%d-hi%d-color-hsv.avi' % (factor, lowFreq, highFreq)
 
 phaseBasedMagnify(vidFname, vidFnameOut, maxFrames, windowSize, factor, fpsForBandPass, lowFreq, highFreq)
-
-
-
