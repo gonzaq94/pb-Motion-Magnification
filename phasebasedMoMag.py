@@ -1,4 +1,5 @@
 from perceptual.filterbank import *
+import matplotlib.pyplot as plt
 
 import cv2
 
@@ -63,10 +64,9 @@ def phaseBasedMagnify(vidFname, vidFnameOut, maxFrames, windowSize, factor, fpsF
 
     # setup temporal filter
     filter = IdealFilterWindowed(windowSize, lowFreq, highFreq, fps=fpsForBandPass, outfun=lambda x: x[0])
-    #filter = ButterBandpassFilter(1, lowFreq, highFreq, fps=fpsForBandPass)
 
     print 'FrameNr:', 
-    for frameNr in range(100):#nrFrames + windowSize
+    for frameNr in range(nrFrames + windowSize):
         print frameNr,
         sys.stdout.flush() 
 
@@ -77,19 +77,16 @@ def phaseBasedMagnify(vidFname, vidFnameOut, maxFrames, windowSize, factor, fpsF
             if im is None:
                 # if unexpected, quit
                 break
-			
+
             # convert to gray image
             if len(im.shape) > 2:
                 grayIm = cv2.cvtColor(im, cv2.COLOR_RGB2GRAY)
-                grayIm = cv2.randn(grayIm, (0), (99))
             else:
                 # already a grayscale image?
                 grayIm = im
 
             # We decompose the image within the pyramid's coefficients. This refers to the first column in the figure 2 of the paper.
             coeff = steer.buildSCFpyr(grayIm)
-            #coeff = steer.buildSCFpyr(HSV_img[:,:,2])
-
 
             # add image pyramid to video array
             # NOTE: on first frame, this will init rotating array to store the pyramid coeffs                 
@@ -128,9 +125,9 @@ def phaseBasedMagnify(vidFname, vidFnameOut, maxFrames, windowSize, factor, fpsF
             
             # make a RGB image
             rgbIm = np.empty( (out.shape[0], out.shape[1], 3 ) )
-            rgbIm[:,:,0] = out#HSV_img[:,:,0]
-            rgbIm[:,:,1] = out#HSV_img[:,:,1]
-            rgbIm[:,:,2] = out#im[:,:,2]
+            rgbIm[:, :, 0] = out
+            rgbIm[:, :, 1] = out
+            rgbIm[:, :, 2] = out
             
             #write to disk
             res = cv2.convertScaleAbs(rgbIm)
@@ -143,17 +140,17 @@ def phaseBasedMagnify(vidFname, vidFnameOut, maxFrames, windowSize, factor, fpsF
 
 ################# main script
 
-#vidFname = 'media/baby.mp4';
-#vidFname = 'media/WIN_20151208_17_11_27_Pro.mp4.normalized.avi'
-#vidFname = 'media/embryos01_30s.mp4'
 vidFname = 'media/guitar.mp4'
+vidFname = 'media/noisy videos/guitar.mp4-noisy-wgn-1.avi'
+vidFname = 'media/noisy videos/guitar.mp4-noisy-s&p-0.05.avi'
+vidFname = 'media/noisy videos/guitar.mp4-noisy-uniform-200.avi'
 
 # maximum nr of frames to process
 maxFrames = 60000
 # the size of the sliding window
 windowSize = 30
-# the magnifaction factor
-factor = 2
+# the magnification factor
+factor = 40
 # the fps used for the bandpass
 fpsForBandPass = 600 # use -1 for input video fps
 # low ideal filter
