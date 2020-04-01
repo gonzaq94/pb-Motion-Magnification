@@ -18,7 +18,7 @@ from pyr2arr import Pyramid2arr
 from temporal_filters import IdealFilterWindowed, ButterBandpassFilter
 
 
-def phaseBasedMagnify(vidFname, vidFnameOut, maxFrames, windowSize, factor, fpsForBandPass, lowFreq, highFreq):
+def phaseBasedMagnifyColor(vidFname, vidFnameOut, maxFrames, windowSize, factor, fpsForBandPass, lowFreq, highFreq):
     # initialize the steerable complex pyramid
     steer = Steerable(5)
     steer.nbands = 8
@@ -66,7 +66,7 @@ def phaseBasedMagnify(vidFname, vidFnameOut, maxFrames, windowSize, factor, fpsF
     # filter = ButterBandpassFilter(1, lowFreq, highFreq, fps=fpsForBandPass)
 
     print 'FrameNr:',
-    for frameNr in range(nrFrames + windowSize):  # nrFrames + windowSize
+    for frameNr in range(nrFrames + windowSize):
         print frameNr,
         sys.stdout.flush()
 
@@ -135,11 +135,11 @@ def phaseBasedMagnify(vidFname, vidFnameOut, maxFrames, windowSize, factor, fpsF
 
             # write to disk
 
-            #if motionCounter < len(im.shape):
-             #   print 'in'
-              #  res = cv2.convertScaleAbs(im)
-            #else:
-            res = cv2.convertScaleAbs(rgbIm)
+            if motionCounter < len(im.shape):
+                print 'in'
+                res = cv2.convertScaleAbs(im)
+            else:
+                res = cv2.convertScaleAbs(rgbIm)
             vidWriter.write(res)
 
     # free the video reader/writer
@@ -159,7 +159,7 @@ maxFrames = 60000
 # the size of the sliding window
 windowSize = 30
 # the magnifaction factor
-factor = 20
+factor = 500
 # the fps used for the bandpass
 fpsForBandPass = 600  # use -1 for input video fps
 # low ideal filter
@@ -169,4 +169,4 @@ highFreq = 92
 # output video filename
 vidFnameOut = vidFname + '-Mag%dIdeal-lo%d-hi%d-color.avi' % (factor, lowFreq, highFreq)
 
-phaseBasedMagnify(vidFname, vidFnameOut, maxFrames, windowSize, factor, fpsForBandPass, lowFreq, highFreq)
+phaseBasedMagnifyColor(vidFname, vidFnameOut, maxFrames, windowSize, factor, fpsForBandPass, lowFreq, highFreq)

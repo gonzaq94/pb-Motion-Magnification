@@ -82,17 +82,17 @@ def addNoiseToVideo(vidFname, vidFnameOut, maxFrames, noise_type):
                 break
 
             if noise_type == 'wgn':
-
-                im = cv2.add(im, cv2.randn(np.zeros(im.shape), (mean, mean, mean), (std, std, std)).astype('uint8'))
+                noise = cv2.randn(np.zeros(im.shape), (mean, mean, mean), (std, std, std))
+                im = im + noise
             elif noise_type == 's&p':
                 im = sp_noise(im, prob)
             elif noise_type == 'uniform':
-                im = cv2.add(im, cv2.randu(np.zeros(im.shape), -max_u, max_u).astype('uint8'))
+                noise = cv2.randu(np.zeros(im.shape), (-max_u,-max_u,-max_u), (max_u,max_u,max_u))                
+                im = im + noise
 
             #noise = np.random.randn(im.shape[0],im.shape[1],im.shape[2])#randint(0, 255, size=c, dtype=np.uint8)
 
             #im = im + noise
-
 
             im[im>255] = 255
             im[im<0] = 0
@@ -118,14 +118,14 @@ vidFolder = 'media/'
 maxFrames = 60000
 
 # noise parameters
-noise_type = 's&p'
+noise_type = 'uniform' #possible values 'wgn', 'uniform' and 's&p'
 # gaussian
-std = 1
+std = 50
 mean = 0
 # salt and pepper
-prob = 0.05 # for salt and pepper noise
+prob = 0.1 # for salt and pepper noise
 #uniform
-max_u = 200
+max_u = 60
 
 # output video filename
 output_folder = 'media/noisy videos/'

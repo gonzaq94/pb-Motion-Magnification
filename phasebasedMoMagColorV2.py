@@ -1,4 +1,6 @@
 from perceptual.filterbank import *
+import matplotlib.pyplot as plt
+from matplotlib.colors import hsv_to_rgb
 
 import cv2
 
@@ -66,7 +68,7 @@ def phaseBasedMagnify(vidFname, vidFnameOut, maxFrames, windowSize, factor, fpsF
     # filter = ButterBandpassFilter(1, lowFreq, highFreq, fps=fpsForBandPass)
 
     print 'FrameNr:',
-    for frameNr in range(nrFrames + windowSize):
+    for frameNr in range(nrFrames + windowSize): #nrFrames + windowSize
         print frameNr,
         sys.stdout.flush()
 
@@ -77,11 +79,12 @@ def phaseBasedMagnify(vidFname, vidFnameOut, maxFrames, windowSize, factor, fpsF
             if im is None:
                 # if unexpected, quit
                 break
-
             # convert to gray image
             if len(im.shape) > 2:
+                #plt.imshow(im)
+                #plt.show()
                 im = cv2.cvtColor(im, cv2.COLOR_BGR2HSV)
-                grayIm = im[:, :, 2]
+                grayIm = np.array(im[:, :, 2])
             else:
                 # already a grayscale image?
                 grayIm = im
@@ -109,7 +112,6 @@ def phaseBasedMagnify(vidFname, vidFnameOut, maxFrames, windowSize, factor, fpsF
             print '*',
 
             # motion magnification
-            # magnifiedPhases = (phases - filteredPhases) + filteredPhases*factor
             magnifiedPhases = phases + filteredPhases * factor
             # create new array
             newArr = np.abs(arr) * np.exp(magnifiedPhases * 1j)
@@ -126,17 +128,21 @@ def phaseBasedMagnify(vidFname, vidFnameOut, maxFrames, windowSize, factor, fpsF
 
             # make a RGB image
             hsvIm = np.empty((out.shape[0], out.shape[1], 3))
+            hsvIm[:, :, 0] = np.array(im[:,:,0])
+            hsvIm[:, :, 1] = np.array(im[:,:,1])
             hsvIm[:, :, 2] = out
-            rgbIm = cv2.cvtColor(hsvIm.astype(np.float32), cv2.COLOR_HSV2RGB)
 
-            # write to disk
-            res = cv2.convertScaleAbs(rgbIm)
+            rgbIm = cv2.cvtColor((hsvIm/255).astype(np.float32), cv2.COLOR_HSV2BGR)
+
+            res = (rgbIm*255).astype('uint8')
+            plt.imshow(res)
+            plt.show()
+
             vidWriter.write(res)
 
     # free the video reader/writer
     vidReader.release()
     vidWriter.release()
-
 
 ################# main script
 
@@ -150,7 +156,7 @@ maxFrames = 60000
 # the size of the sliding window
 windowSize = 30
 # the magnifaction factor
-factor = 2
+factor = 50
 # the fps used for the bandpass
 fpsForBandPass = 600  # use -1 for input video fps
 # low ideal filter
