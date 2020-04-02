@@ -10,7 +10,7 @@ __Authors: Tales Marra and Gonzalo Quintana.__
 
  - python 2.7
  - numpy
- - [perceptual](https://github.com/andreydung/Steerable-filter) (Complex steerable pyramid, install with: sudo pip install perceptual)
+ - [perceptual](https://github.com/andreydung/Steerable-filter) (Complex steerable pyramid. If you install it with pip you will find and old version that doesn't work. Use the version of this repository or download from the previous github link)
  
  
 ### Demo
