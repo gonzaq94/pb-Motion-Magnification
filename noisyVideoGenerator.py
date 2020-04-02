@@ -1,5 +1,4 @@
 import cv2
-import matplotlib.pyplot as plt
 
 # determine what OpenCV version we are using
 try:
@@ -31,8 +30,10 @@ def sp_noise(image,prob):
                 output[i][j] = image[i][j]
     return output
 
-def addNoiseToVideo(vidFname, vidFnameOut, maxFrames, noise_type):
-    # initialize the steerable complex pyramid
+def addNoiseToVideo(vidFname, vidFnameOut, maxFrames, noise_type, noise_param):
+
+    # for Gaussian noise
+    mean = 0
 
     print "Reading:", vidFname,
 
@@ -81,18 +82,17 @@ def addNoiseToVideo(vidFname, vidFnameOut, maxFrames, noise_type):
                 # if unexpected, quit
                 break
 
-            if noise_type == 'wgn':
-                noise = cv2.randn(np.zeros(im.shape), (mean, mean, mean), (std, std, std))
+            if noise_type == 'gaussian':
+                noise = cv2.randn(np.zeros(im.shape), (mean, mean, mean), (noise_param, noise_param, noise_param))
+                # noise_param is the STD
                 im = im + noise
             elif noise_type == 's&p':
-                im = sp_noise(im, prob)
+                im = sp_noise(im, noise_param/2)
+                # noise_param is the noise probability
             elif noise_type == 'uniform':
-                noise = cv2.randu(np.zeros(im.shape), (-max_u,-max_u,-max_u), (max_u,max_u,max_u))                
+                noise = cv2.randu(np.zeros(im.shape), (-noise_param,-noise_param,-noise_param), (noise_param,noise_param,noise_param))
+                # noise_param is the maximal value of the uniform             
                 im = im + noise
-
-            #noise = np.random.randn(im.shape[0],im.shape[1],im.shape[2])#randint(0, 255, size=c, dtype=np.uint8)
-
-            #im = im + noise
 
             im[im>255] = 255
             im[im<0] = 0
@@ -105,35 +105,38 @@ def addNoiseToVideo(vidFname, vidFnameOut, maxFrames, noise_type):
     vidReader.release()
     vidWriter.release()
 
-
 ################# main script
+def main():
 
-# vidFname = 'media/baby.mp4';
-# vidFname = 'media/WIN_20151208_17_11_27_Pro.mp4.normalized.avi'
-# vidFname = 'media/embryos01_30s.mp4'
-vidFname = 'guitar.mp4'
-vidFolder = 'media/'
+    # vidFname = 'media/baby.mp4';
+    # vidFname = 'media/WIN_20151208_17_11_27_Pro.mp4.normalized.avi'
+    # vidFname = 'media/embryos01_30s.mp4'
+    vidFname = 'guitar.mp4'
+    vidFolder = 'media/'
 
-# maximum nr of frames to process
-maxFrames = 60000
+    # maximum nr of frames to process
+    maxFrames = 60000
 
-# noise parameters
-noise_type = 'uniform' #possible values 'wgn', 'uniform' and 's&p'
-# gaussian
-std = 50
-mean = 0
-# salt and pepper
-prob = 0.1 # for salt and pepper noise
-#uniform
-max_u = 60
+    # noise parameters
+    noise_type = 'uniform' #possible values 'gaussian', 'uniform' and 's&p'
+    # gaussian
+    std = 50
+    mean = 0
+    # salt and pepper
+    prob = 0.1 # for salt and pepper noise
+    #uniform
+    max_u = 1
 
-# output video filename
-output_folder = 'media/noisy videos/'
-if noise_type == 'wgn':
-    vidFnameOut = output_folder + vidFname + '-noisy-%s-%d.avi' % (noise_type, std)
-elif noise_type == 's&p':
-    vidFnameOut = output_folder + vidFname + '-noisy-%s-%1.2f.avi' % (noise_type, prob)
-elif noise_type == 'uniform':
-    vidFnameOut = output_folder + vidFname + '-noisy-%s-%d.avi' % (noise_type, max_u)
+    # output video filename
+    output_folder = 'media/noisy videos/'
+    if noise_type == 'gaussian':
+        vidFnameOut = output_folder + vidFname + '-noisy-%s-%d.avi' % (noise_type, std)
+    elif noise_type == 's&p':
+        vidFnameOut = output_folder + vidFname + '-noisy-%s-%1.2f.avi' % (noise_type, prob)
+    elif noise_type == 'uniform':
+        vidFnameOut = output_folder + vidFname + '-noisy-%s-%d.avi' % (noise_type, max_u)
 
-addNoiseToVideo(vidFolder + vidFname, vidFnameOut, maxFrames, noise_type)
+    addNoiseToVideo(vidFolder + vidFname, vidFnameOut, maxFrames, noise_type, max_u)
+
+if __name__ == "__main__":
+    main()

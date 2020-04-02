@@ -1,6 +1,4 @@
 from perceptual.filterbank import *
-import matplotlib.pyplot as plt
-from matplotlib.colors import hsv_to_rgb
 
 import cv2
 
@@ -20,7 +18,7 @@ from pyr2arr import Pyramid2arr
 from temporal_filters import IdealFilterWindowed, ButterBandpassFilter
 
 
-def phaseBasedMagnify(vidFname, vidFnameOut, maxFrames, windowSize, factor, fpsForBandPass, lowFreq, highFreq):
+def phaseBasedMagnifyColor(vidFname, vidFnameOut, maxFrames, windowSize, factor, fpsForBandPass, lowFreq, highFreq):
     # initialize the steerable complex pyramid
     steer = Steerable(5)
     steer.nbands = 8
@@ -65,10 +63,9 @@ def phaseBasedMagnify(vidFname, vidFnameOut, maxFrames, windowSize, factor, fpsF
 
     # setup temporal filter
     filter = IdealFilterWindowed(windowSize, lowFreq, highFreq, fps=fpsForBandPass, outfun=lambda x: x[0])
-    # filter = ButterBandpassFilter(1, lowFreq, highFreq, fps=fpsForBandPass)
 
     print 'FrameNr:',
-    for frameNr in range(nrFrames + windowSize): #nrFrames + windowSize
+    for frameNr in range(nrFrames + windowSize):
         print frameNr,
         sys.stdout.flush()
 
@@ -81,8 +78,6 @@ def phaseBasedMagnify(vidFname, vidFnameOut, maxFrames, windowSize, factor, fpsF
                 break
             # convert to gray image
             if len(im.shape) > 2:
-                #plt.imshow(im)
-                #plt.show()
                 im = cv2.cvtColor(im, cv2.COLOR_BGR2HSV)
                 grayIm = np.array(im[:, :, 2])
             else:
@@ -91,7 +86,6 @@ def phaseBasedMagnify(vidFname, vidFnameOut, maxFrames, windowSize, factor, fpsF
 
             # We decompose the image within the pyramid's coefficients. This refers to the first column in the figure 2 of the paper.
             coeff = steer.buildSCFpyr(grayIm)
-            # coeff = steer.buildSCFpyr(HSV_img[:,:,2])
 
             # add image pyramid to video array
             # NOTE: on first frame, this will init rotating array to store the pyramid coeffs
@@ -135,8 +129,6 @@ def phaseBasedMagnify(vidFname, vidFnameOut, maxFrames, windowSize, factor, fpsF
             rgbIm = cv2.cvtColor((hsvIm/255).astype(np.float32), cv2.COLOR_HSV2BGR)
 
             res = (rgbIm*255).astype('uint8')
-            plt.imshow(res)
-            plt.show()
 
             vidWriter.write(res)
 
@@ -144,26 +136,28 @@ def phaseBasedMagnify(vidFname, vidFnameOut, maxFrames, windowSize, factor, fpsF
     vidReader.release()
     vidWriter.release()
 
+
 ################# main script
+def main():
 
-# vidFname = 'media/baby.mp4';
-# vidFname = 'media/WIN_20151208_17_11_27_Pro.mp4.normalized.avi'
-# vidFname = 'media/embryos01_30s.mp4'
-vidFname = 'media/guitar.mp4'
+    vidFname = 'media/guitar.mp4'
 
-# maximum nr of frames to process
-maxFrames = 60000
-# the size of the sliding window
-windowSize = 30
-# the magnifaction factor
-factor = 50
-# the fps used for the bandpass
-fpsForBandPass = 600  # use -1 for input video fps
-# low ideal filter
-lowFreq = 72
-# high ideal filter
-highFreq = 92
-# output video filename
-vidFnameOut = vidFname + '-Mag%dIdeal-lo%d-hi%d-color-hsv.avi' % (factor, lowFreq, highFreq)
+    # maximum nr of frames to process
+    maxFrames = 60000
+    # the size of the sliding window
+    windowSize = 30
+    # the magnification factor
+    factor = 40
+    # the fps used for the bandpass
+    fpsForBandPass = 600 # use -1 for input video fps
+    # low ideal filter
+    lowFreq = 72
+    # high ideal filter
+    highFreq = 92
+    # output video filename
+    vidFnameOut = vidFname + '-Mag%dIdeal-lo%d-hi%d-color-hsv.avi' % (factor, lowFreq, highFreq)
 
-phaseBasedMagnify(vidFname, vidFnameOut, maxFrames, windowSize, factor, fpsForBandPass, lowFreq, highFreq)
+    phaseBasedMagnifyColor(vidFname, vidFnameOut, maxFrames, windowSize, factor, fpsForBandPass, lowFreq, highFreq)
+
+if __name__ == "__main__":
+    main()

@@ -58,12 +58,8 @@ def phaseBasedMagnifyColor(vidFname, vidFnameOut, maxFrames, windowSize, factor,
     # how many frames
     nrFrames = min(vidFrames, maxFrames)
 
-    # read video
-    # print steer.height, steer.nbands
-
     # setup temporal filter
     filter = IdealFilterWindowed(windowSize, lowFreq, highFreq, fps=fpsForBandPass, outfun=lambda x: x[0])
-    # filter = ButterBandpassFilter(1, lowFreq, highFreq, fps=fpsForBandPass)
 
     print 'FrameNr:',
     for frameNr in range(nrFrames + windowSize):
@@ -80,8 +76,6 @@ def phaseBasedMagnifyColor(vidFname, vidFnameOut, maxFrames, windowSize, factor,
 
             # convert to gray image
             if len(im.shape) > 2:
-                # HSV_img = cv2.cvtColor(im,cv2.COLOR_BGR2HSV)
-                # grayIm = cv2.cvtColor(im, cv2.COLOR_RGB2GRAY)
                 grayIm = cv2.cvtColor(im, cv2.COLOR_RGB2GRAY)
             else:
                 # already a grayscale image?
@@ -93,7 +87,6 @@ def phaseBasedMagnifyColor(vidFname, vidFnameOut, maxFrames, windowSize, factor,
 
                 # We decompose the image within the pyramid's coefficients. This refers to the first column in the figure 2 of the paper.
                 coeff = steer.buildSCFpyr(im[:, :, i])
-                # coeff = steer.buildSCFpyr(HSV_img[:,:,2])
 
                 # add image pyramid to video array
                 # NOTE: on first frame, this will init rotating array to store the pyramid coeffs
@@ -115,7 +108,6 @@ def phaseBasedMagnifyColor(vidFname, vidFnameOut, maxFrames, windowSize, factor,
                 print '*',
 
                 # motion magnification
-                # magnifiedPhases = (phases - filteredPhases) + filteredPhases*factor
                 magnifiedPhases = phases + filteredPhases * factor
                 # create new array
                 newArr = np.abs(arr) * np.exp(magnifiedPhases * 1j)
@@ -136,7 +128,6 @@ def phaseBasedMagnifyColor(vidFname, vidFnameOut, maxFrames, windowSize, factor,
             # write to disk
 
             if motionCounter < len(im.shape):
-                print 'in'
                 res = cv2.convertScaleAbs(im)
             else:
                 res = cv2.convertScaleAbs(rgbIm)
@@ -145,28 +136,28 @@ def phaseBasedMagnifyColor(vidFname, vidFnameOut, maxFrames, windowSize, factor,
     # free the video reader/writer
     vidReader.release()
     vidWriter.release()
-
-
+ 
 ################# main script
+def main():
 
-# vidFname = 'media/baby.mp4';
-# vidFname = 'media/WIN_20151208_17_11_27_Pro.mp4.normalized.avi'
-# vidFname = 'media/embryos01_30s.mp4'
-vidFname = 'media/guitar.mp4'
+    vidFname = 'media/guitar.mp4'
 
-# maximum nr of frames to process
-maxFrames = 60000
-# the size of the sliding window
-windowSize = 30
-# the magnifaction factor
-factor = 500
-# the fps used for the bandpass
-fpsForBandPass = 600  # use -1 for input video fps
-# low ideal filter
-lowFreq = 72
-# high ideal filter
-highFreq = 92
-# output video filename
-vidFnameOut = vidFname + '-Mag%dIdeal-lo%d-hi%d-color.avi' % (factor, lowFreq, highFreq)
+    # maximum nr of frames to process
+    maxFrames = 60000
+    # the size of the sliding window
+    windowSize = 30
+    # the magnifaction factor
+    factor = 500
+    # the fps used for the bandpass
+    fpsForBandPass = 600  # use -1 for input video fps
+    # low ideal filter
+    lowFreq = 72
+    # high ideal filter
+    highFreq = 92 
+    # output video filename 
+    vidFnameOut = vidFname + '-Mag%dIdeal-lo%d-hi%d-color.avi' % (factor, lowFreq, highFreq)
 
-phaseBasedMagnifyColor(vidFname, vidFnameOut, maxFrames, windowSize, factor, fpsForBandPass, lowFreq, highFreq)
+    phaseBasedMagnifyColor(vidFname, vidFnameOut, maxFrames, windowSize, factor, fpsForBandPass, lowFreq, highFreq)
+
+if __name__ == "__main__":
+    main()

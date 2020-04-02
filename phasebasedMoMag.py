@@ -1,5 +1,4 @@
 from perceptual.filterbank import *
-import matplotlib.pyplot as plt
 
 import cv2
 
@@ -59,14 +58,11 @@ def phaseBasedMagnify(vidFname, vidFnameOut, maxFrames, windowSize, factor, fpsF
     # how many frames
     nrFrames = min(vidFrames, maxFrames)
 
-    # read video
-    #print steer.height, steer.nbands
-
     # setup temporal filter
     filter = IdealFilterWindowed(windowSize, lowFreq, highFreq, fps=fpsForBandPass, outfun=lambda x: x[0])
 
     print 'FrameNr:', 
-    for frameNr in range(nrFrames + windowSize):#nrFrames + windowSize
+    for frameNr in range(nrFrames + windowSize):
         print frameNr,
         sys.stdout.flush() 
         
@@ -108,7 +104,6 @@ def phaseBasedMagnify(vidFname, vidFnameOut, maxFrames, windowSize, factor, fpsF
             print '*',
             
             # motion magnification
-            #magnifiedPhases = (phases - filteredPhases) + filteredPhases*factor
             magnifiedPhases = phases + filteredPhases*factor
             # create new array
             newArr = np.abs(arr) * np.exp(magnifiedPhases * 1j)
@@ -142,10 +137,6 @@ def phaseBasedMagnify(vidFname, vidFnameOut, maxFrames, windowSize, factor, fpsF
 def main():
 
     vidFname = 'media/guitar.mp4'
-    vidFname = 'media/noisy videos/guitar.mp4-noisy-wgn-20.avi'
-    #vidFname = 'media/noisy videos/guitar.mp4-noisy-s&p-0.00.avi'
-    #vidFname = 'media/noisy videos/guitar.mp4-noisy-uniform-200.avi'
-
     # maximum nr of frames to process
     maxFrames = 60000
     # the size of the sliding window
