@@ -2,7 +2,7 @@
 
 A Python source code implementation of motion magnification based on the paper: [Phase Based Video Motion Processing](http://people.csail.mit.edu/mrub/papers/phasevid-siggraph13.pdf) by Neal Wadhwa, Michael Rubinstein, Frédo Durand, William T. Freeman, ACM Transactions on Graphics, Volume 32, Number 4 (Proc. SIGGRAPH), 2013. [project](http://people.csail.mit.edu/nwadhwa/phase-video/). 
 
-This code also include some demos and some scripts that you can execute in order to do the experiments yourself.
+This code also includes some demos and some scripts that you can execute in order to do the experiments yourself.
 
 __Authors: Tales Marra and Gonzalo Quintana.__
 
