@@ -4,7 +4,7 @@ A Python source code implementation of motion magnification based on the paper: 
 
 This code also includes some demos and some scripts that you can execute in order to do the experiments yourself.
 
-__Authors: Tales Marra and Gonzalo Quintana.__
+__Authors: Gonzalo Quintana and Tales Marra.__
 
 ### Requirements:
 
